@@ -43,8 +43,6 @@ contract Owned {
     ///  an unowned neutral vault, however that cannot be undone
     function changeOwner(address _newOwner) onlyOwner {
         owner = _newOwner;
-        NewOwner(msg.sender, _newOwner);
- 
     }
 }
 /// @dev `Escapable` is a base level contract built off of the `Owned`
@@ -137,7 +135,6 @@ contract Vault is Escapable {
     event PaymentCanceled(uint indexed idPayment);
     event EtherReceived(address indexed from, uint amount);
     event SpenderAuthorization(address indexed spender, bool authorized);
-    event NewOwner(address indexed oldOwner, address indexed newOwner);
 
 /////////
 // Constructor
@@ -226,6 +223,9 @@ contract Vault is Escapable {
         // The following lines fill out the payment struct
         Payment p = authorizedPayments[idPayment];
         p.spender = msg.sender;
+
+        // Overflow protection
+        if (_paymentDelay > 10**18) throw;
 
         // Determines the earliest the recipient can receive payment (Unix time)
         p.earliestPayTime = _paymentDelay >= timeLock ?
